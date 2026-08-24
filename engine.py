@@ -649,12 +649,17 @@ class Engine:
             return success
 
     def stop_telegram(self, bot_id: str) -> bool:
-        if bot_id not in self.instances:
+        instance = self.instances.get(bot_id)
+        if not instance:
             return False
-        with self._lock:
-            if self._active_telegram_threads > 0:
-                self._active_telegram_threads -= 1
-        self.instances[bot_id].stop_telegram()
+
+        # уменьшаем счётчик только если polling реально был запущен
+        was_running = bool(instance.telegram and instance.telegram.is_running)
+        instance.stop_telegram()
+
+        if was_running:
+            with self._lock:
+                self._active_telegram_threads = max(0, self._active_telegram_threads - 1)
         return True
 
     def reload_bot(self, bot_id: str) -> bool:

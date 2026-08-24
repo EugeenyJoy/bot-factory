@@ -14,7 +14,6 @@ import os
 import logging
 import aiohttp
 import platform
-import shutil
 import asyncio
 import hmac
 
@@ -31,7 +30,7 @@ from core import ollama_catalog
 
 from core.config import (
     list_bots, load_config, create_bot, delete_bot,
-    update_bot, get_models, get_providers, BOTS_DIR
+    update_bot, get_models, get_providers, AI_PROVIDERS, BOTS_DIR
 )
 
 # ====================================================
@@ -166,7 +165,8 @@ def safe_resolve_path(base: Path, user_path: str) -> Path:
     """Безопасное разрешение пути — защита от path traversal"""
     target = (base / user_path).resolve()
     base_resolved = base.resolve()
-    if not str(target).startswith(str(base_resolved)):
+    # проверяем границу с разделителем: /base_evil не должен проходить как /base
+    if target != base_resolved and not str(target).startswith(str(base_resolved) + os.sep):
         raise HTTPException(status_code=403, detail="Access denied")
     return target
 
@@ -218,9 +218,8 @@ class CreateBotRequest(BaseModel):
     
     @validator('provider')
     def provider_valid(cls, v):
-        valid = {'openrouter', 'ollama', 'custom'}
-        if v not in valid:
-            raise ValueError(f'Provider must be one of: {valid}')
+        if v not in AI_PROVIDERS:
+            raise ValueError(f'Provider must be one of: {sorted(AI_PROVIDERS.keys())}')
         return v
 
 

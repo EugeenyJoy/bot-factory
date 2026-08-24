@@ -536,7 +536,7 @@ function renderModelDropdown(prefix, query) {
         if (hfSearchLoading) {
             html += `<div class="model-search-count">⏳ Поиск на HuggingFace...</div>`;
         } else {
-            html += `<div class="model-search-count" style="cursor:pointer; color:#58a6ff;" onclick="searchHuggingFace('${prefix}', '${escapeAttr(query)}')">🤗 Искать «${escapeHtml(query)}» на HuggingFace →</div>`;
+            html += `<div class="model-search-count" style="cursor:pointer; color:#58a6ff;" onclick="searchHuggingFace('${prefix}', '${escapeJs(query)}')">🤗 Искать «${escapeHtml(query)}» на HuggingFace →</div>`;
         }
     }
 
@@ -588,6 +588,18 @@ function highlightMatch(text, query) {
 
 function escapeRegex(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 function escapeAttr(str) { return str.replace(/'/g, "\\'").replace(/"/g, '\\"'); }
+
+// Экранирование для JS-строки внутри HTML-атрибута (onclick="fn('${...}')").
+// Порядок важен: сначала \ и &, потом ' (JS-уровень) и " (HTML-уровень).
+function escapeJs(str) {
+    const AMP = '&' + 'amp;';
+    const QUOT = '&' + 'quot;';
+    return String(str ?? '')
+        .replace(/\\/g, '\\\\')
+        .replace(/&/g, AMP)
+        .replace(/'/g, "\\'")
+        .replace(/"/g, QUOT);
+}
 
 function modelSearchSelect(prefix, modelId) {
     console.log("SELECT:", prefix, modelId);
@@ -801,9 +813,9 @@ function renderBots(bots) {
                 <div style="margin-top:12px; display:flex; gap:6px; flex-wrap:wrap;">
                     ${active
                         ? `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); stopBot('${bot.bot_id}')">⏹</button>
-                           <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openTerminal('${bot.bot_id}', '${escapeHtml(bot.name)}')">🖥️ Чат</button>
+                           <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openTerminal('${bot.bot_id}', '${escapeJs(bot.name)}')">🖥️ Чат</button>
                            <a class="btn btn-ghost btn-sm" href="/chat/${bot.bot_id}" target="_blank" onclick="event.stopPropagation()">🔗</a>
-                            <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); openFiles('${bot.bot_id}', '${escapeHtml(bot.name)}')">📁</button>
+                            <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); openFiles('${bot.bot_id}', '${escapeJs(bot.name)}')">📁</button>
                            <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); openKnowledge('${bot.bot_id}')">📚</button>
                            ${bot.has_token && !tg
                                ? `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); startTelegram('${bot.bot_id}')">🔵</button>`
@@ -812,7 +824,7 @@ function renderBots(bots) {
                                ? `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); stopTelegram('${bot.bot_id}')">⏹TG</button>`
                                : ''}`
                         : `<button class="btn btn-success btn-sm" onclick="event.stopPropagation(); startBot('${bot.bot_id}')">▶ Запустить</button>
-                           <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); openFiles('${bot.bot_id}', '${escapeHtml(bot.name)}')">📁</button>`
+                           <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); openFiles('${bot.bot_id}', '${escapeJs(bot.name)}')">📁</button>`
                     }
                 </div>
             </div>
@@ -1373,7 +1385,7 @@ function knowledgeFileRow(f) {
                 <span style="color:#e0e0e0; font-size:13px;">${escapeHtml(f.name)}</span>
                 <span style="color:#555; font-size:11px; margin-left:8px;">${formatFileSize(f.size)} · ${f.chunks} чанков</span>
             </div>
-            <button class="btn btn-danger btn-sm" onclick="deleteKnowledgeFile('${escapeHtml(f.name)}')">✕</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteKnowledgeFile('${escapeJs(f.name)}')">✕</button>
         </div>`;
 }
 
@@ -1603,8 +1615,8 @@ async function filesLoad() {
         const icon = item.type === 'dir' ? '📁' : getFileIcon(item.ext);
         const size = item.type === 'file' ? `<span style="color:#555; font-size:11px;">${formatFileSize(item.size)}</span>` : '';
         const clickAction = item.type === 'dir'
-            ? `filesNavigate('${escapeHtml(item.path)}')`
-            : `filesOpenFile('${escapeHtml(item.path)}')`;
+            ? `filesNavigate('${escapeJs(item.path)}')`
+            : `filesOpenFile('${escapeJs(item.path)}')`;
 
         return `
             <div onclick="${clickAction}" style="
@@ -1618,7 +1630,7 @@ async function filesLoad() {
                 </div>
                 <div style="display:flex; gap:8px; align-items:center;">
                     ${size}
-                    ${!filesSystemMode && item.type === 'file' ? `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); filesDeleteFile('${escapeHtml(item.path)}', '${escapeHtml(item.name)}')">✕</button>` : ''}
+                    ${!filesSystemMode && item.type === 'file' ? `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); filesDeleteFile('${escapeJs(item.path)}', '${escapeJs(item.name)}')">✕</button>` : ''}
                 </div>
             </div>`;
     }).join('');

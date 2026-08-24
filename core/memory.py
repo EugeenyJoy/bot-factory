@@ -343,7 +343,7 @@ class Memory:
             (user_id,)
         )
 
-    def can_send(self, user_id: int, free_limit: int, vip_unlimited: bool = True) -> bool:
+    def can_send(self, user_id: int, free_limit: int, vip_unlimited: bool = False) -> bool:
         """Может ли юзер отправить сообщение"""
         user = self.get_or_create_user(user_id)
         if user["is_vip"] and vip_unlimited:
@@ -351,7 +351,7 @@ class Memory:
         total_allowed = free_limit + user["messages_bought"]
         return user["messages_used"] < total_allowed
 
-    def get_remaining(self, user_id: int, free_limit: int, vip_unlimited: bool = True) -> int:
+    def get_remaining(self, user_id: int, free_limit: int, vip_unlimited: bool = False) -> int:
         """Сколько сообщений осталось"""
         user = self.get_or_create_user(user_id)
         if user["is_vip"] and vip_unlimited:
